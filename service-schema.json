@@ -1,1 +1,340 @@
-{"$schema":"http://json-schema.org/draft-07/schema#","$ref":"#/definitions/template","definitions":{"template":{"type":"object","properties":{"id":{"type":"string","pattern":"^([a-zA-Z0-9]+[-_])*[a-zA-Z0-9]+$","minLength":1},"info":{"type":"object","properties":{"name":{"type":"string","minLength":1},"tags":{"type":"string","pattern":"^([a-zA-Z0-9_-]+,?)+$"},"author":{"$ref":"#/properties/info/properties/tags"},"description":{"type":"string","minLength":1,"maxLength":2048},"reference":{"type":"array","items":{"type":"string","minLength":1,"format":"uri"}},"severity":{"type":"string","enum":["info","low","medium","high","critical"]},"remediation":{"type":"string"},"classification":{"type":"object","properties":{"cve-id":{"type":"string","pattern":"^CVE-\\d{4}-\\d{4,7}$"},"cwd-id":{"type":"string","pattern":"^CWE-[0-9]+$"},"cvss-metrics":{"type":"string"},"cvss-score":{"type":"integer","exclusiveMinimum":0,"minimum":0,"maximum":10}},"required":["cve-id","cwd-id","cvss-metrics","cvss-score"],"additionalProperties":false}},"required":["name","tags","author"],"additionalProperties":false},"requests":{"type":"array","items":{"type":"object","properties":{"method":{"type":"string","enum":["GET","POST","PUT","DELETE","CONNECT","OPTIONS","TRACE","PATCH","PURGE","Debug"]},"path":{"type":"array","items":{"type":"string","minLength":1},"minItems":1},"attack":{"type":"string","enum":["batteringram","pitchfork","clusterbomb"]},"id":{"type":"string"},"body":{"type":"string"},"headers":{"type":"object","additionalProperties":{"type":"string"}},"race_count":{"type":"integer","exclusiveMinimum":0},"threads":{"$ref":"#/properties/requests/items/properties/race_count"},"redirects":{"type":"boolean"},"pipeline":{"type":"boolean"},"unsafe":{"type":"boolean"},"race":{"type":"boolean"},"max-redirects":{"$ref":"#/properties/requests/items/properties/race_count"},"pipeline-concurrent-connections":{"$ref":"#/properties/requests/items/properties/race_count"},"pipeline-requests-per-connection":{"$ref":"#/properties/requests/items/properties/race_count"},"max-size":{"$ref":"#/properties/requests/items/properties/race_count"},"req-condition":{"type":"boolean"},"iterate-all":{"type":"boolean"},"skip-variables-check":{"type":"boolean"},"stop-at-first-match":{"type":"boolean"},"cookie-reuse":{"type":"boolean"}},"required":["method","path"],"additionalProperties":false},"minItems":1}},"required":["id","info","requests"],"additionalProperties":false}},"title":"Pipeline schema","description":"A pipeline definition"}
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/template",
+  "definitions": {
+    "template": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^([a-zA-Z0-9]+[-_])*[a-zA-Z0-9]+$",
+          "minLength": 1,
+          "description": "ID is the unique id for this template."
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name of this template. Should be good short summary that identifies what the template does."
+            },
+            "tags": {
+              "type": "string",
+              "pattern": "^([a-zA-Z0-9_-]+,?)+$",
+              "description": "Any tags for the template. Multiple values also can be specified separated by comas. 'foo,bar'"
+            },
+            "author": {
+              "type": "string",
+              "pattern": "^([a-zA-Z0-9_-]+,?)+$",
+              "description": "Authors of this template. Multiple values also can be specified separated by comas. 'foo,bar'"
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048,
+              "description": "Description of this template, you can go in-depth here on what this template actually does."
+            },
+            "reference": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uri"
+              },
+              "description": "Reference should contain links relevant to this template."
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "info",
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ],
+              "description": "Severity level of this template."
+            },
+            "remediation": {
+              "type": "string",
+              "description": "Remediation steps, how to mitigate the problem found by this template."
+            },
+            "classification": {
+              "type": "object",
+              "properties": {
+                "cve-id": {
+                  "type": "string",
+                  "pattern": "^CVE-\\d{4}-\\d{4,7}$",
+                  "description": "CVE id for this template."
+                },
+                "cwe-id": {
+                  "type": "string",
+                  "pattern": "^CWE-[0-9]+$",
+                  "description": "CWE id for this template."
+                },
+                "cvss-metrics": {
+                  "type": "string",
+                  "description": "CVSS metrics."
+                },
+                "cvss-score": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "minimum": 0,
+                  "maximum": 10,
+                  "description": "CVSS score for this template."
+                }
+              },
+              "required": [
+                "cve-id",
+                "cwe-id",
+                "cvss-metrics",
+                "cvss-score"
+              ],
+              "additionalProperties": false,
+              "description": "Information about CVE/CWE classification of this template."
+            }
+          },
+          "required": [
+            "name",
+            "tags",
+            "author"
+          ],
+          "additionalProperties": false,
+          "description": "Metadata information about this template."
+        },
+        "self-container": {
+          "type": "boolean",
+          "description": "Mark requests for this template as self-contained."
+        },
+        "stop-at-first-match": {
+          "$ref": "#/properties/self-container",
+          "description": "Stop execution once first match is found."
+        },
+        "dns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Id of this request."
+              },
+              "retries": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "description": "Number of retries for the DNS request."
+              },
+              "trace": {
+                "$ref": "#/properties/self-container",
+                "description": "Performs a trace operation for the target."
+              },
+              "class": {
+                "type": "string",
+                "enum": [
+                  "inet",
+                  "csnet",
+                  "chaos",
+                  "hesiod",
+                  "any",
+                  "none"
+                ],
+                "description": "The class of DNS request. Usually it's enough to just leave it as INET."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Hostname to make DNS request for. Generally, it is set to {{FQDN}} which is the domain we get from input."
+              },
+              "recursion": {
+                "$ref": "#/properties/self-container",
+                "description": "Determines if resolver should recurse all records to get fresh results."
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "A",
+                  "NS",
+                  "DS",
+                  "SOA",
+                  "PTR",
+                  "TXT",
+                  "AAAA"
+                ],
+                "description": "Type of DNS request to make."
+              },
+              "trace-max-recursion": {
+                "$ref": "#/properties/dns/items/properties/retries",
+                "description": "Number of max recursion allowed for trace operations."
+              },
+              "resolvers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/dns/items/properties/name"
+                },
+                "description": "Resolvers to use for the dns requests."
+              }
+            },
+            "required": [
+              "id",
+              "class",
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "description": "DNS contains the dns requests to make in this template."
+        },
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "DELETE",
+                  "CONNECT",
+                  "OPTIONS",
+                  "TRACE",
+                  "PATCH",
+                  "PURGE",
+                  "Debug"
+                ],
+                "description": "Http method used for this request"
+              },
+              "path": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1,
+                "description": "All paths for the HTTP requests. It supports variables."
+              },
+              "attack": {
+                "type": "string",
+                "enum": [
+                  "batteringram",
+                  "pitchfork",
+                  "clusterbomb"
+                ],
+                "description": "Type of payload combinations to perform. 'batteringram' is inserts the same payload into all defined payload positions at once, 'pitchfork' combines multiple payload sets and 'clusterbomb' generates permutations and combinations for all payloads."
+              },
+              "raw": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/dns/items/properties/name"
+                },
+                "description": "Raw formats for HTTP requests."
+              },
+              "id": {
+                "type": "string",
+                "description": "ID for this request."
+              },
+              "payloads": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Any payloads for the current request. But you can also provide a file as payload witch will be read on run-time."
+              },
+              "body": {
+                "type": "string",
+                "description": "Parameter which contains HTTP request body."
+              },
+              "headers": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Http headers to send with this request."
+              },
+              "race_count": {
+                "$ref": "#/properties/dns/items/properties/retries",
+                "description": "Number of times to send a request in Race Condition Attack"
+              },
+              "threads": {
+                "$ref": "#/properties/dns/items/properties/retries",
+                "description": "Specify number of threads to use sending requests. This enables Connection Pooling."
+              },
+              "redirects": {
+                "$ref": "#/properties/self-container",
+                "description": "Redirects specifies whether redirects should be followed by the HTTP Client. This can be used in conjunction with `max-redirects` to control the HTTP request redirects."
+              },
+              "pipeline": {
+                "$ref": "#/properties/self-container",
+                "description": "Pipeline defines if the attack should be performed with HTTP 1.1 Pipelining. All requests must be idempotent (GET/POST). This can be used for race conditions/billions requests"
+              },
+              "unsafe": {
+                "$ref": "#/properties/self-container",
+                "description": "Specifies whether to use raw http engine for sending Non RFC-Compliant requests."
+              },
+              "race": {
+                "$ref": "#/properties/self-container",
+                "description": "Determines if all the request have to be attemped at the same time (Race Condition). The actual number of requests that will be sent is determined by 'race_count' field."
+              },
+              "max-redirects": {
+                "$ref": "#/properties/dns/items/properties/retries",
+                "description": "Maximum number of redirects that should be followed"
+              },
+              "pipeline-concurrent-connections": {
+                "$ref": "#/properties/dns/items/properties/retries",
+                "description": "Number of connections to create during pipelining."
+              },
+              "pipeline-requests-per-connection": {
+                "$ref": "#/properties/dns/items/properties/retries",
+                "description": "Number of requests to send per connection when pipelining."
+              },
+              "max-size": {
+                "$ref": "#/properties/dns/items/properties/retries",
+                "description": "Maximum size of http response body to read in bytes."
+              },
+              "req-condition": {
+                "$ref": "#/properties/self-container",
+                "description": "Automatically assigns numbers to requests and preservers their history. This allow matching on them later for multi-request conditions."
+              },
+              "iterate-all": {
+                "$ref": "#/properties/self-container",
+                "description": "Iterates all the values extracted from internal extractors."
+              },
+              "skip-variables-check": {
+                "$ref": "#/properties/self-container",
+                "description": "Skips the check for unresolved variables in request."
+              },
+              "stop-at-first-match": {
+                "$ref": "#/properties/self-container",
+                "description": "Stops the execution of the requests and template as soon as match is found."
+              },
+              "cookie-reuse": {
+                "$ref": "#/properties/self-container",
+                "description": "Setting that enable cookie reuse for all requests defined in raw section."
+              }
+            },
+            "required": [
+              "method",
+              "path",
+              "raw",
+              "payloads"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "description": "Requests contains the http requests to make in this template."
+        }
+      },
+      "required": [
+        "id",
+        "info",
+        "dns",
+        "requests"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "title": "Nuclei template schema",
+  "description": "A Nuclei template definition"
+}
