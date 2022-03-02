@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { isDeepStrictEqual } from "util";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
@@ -28,6 +29,7 @@ export enum AttackType {
   batteringram = "batteringram",
   pitchfork = "pitchfork",
   clusterbomb = "clusterbomb",
+  limit = "limit",
 }
 
 export type NucleiRequest = {
@@ -239,6 +241,136 @@ const templateInfoSchema = z.object({
     .optional(),
 });
 
+enum ActionTypeHolder {
+  ActionNavigate = "navigate",
+  ActionScript = "script",
+  ActionClick = "click",
+  ActionRightClick = "rightclick",
+  ActionTextInput = "text",
+  ActionScreenshot = "screenshot",
+  ActionTimeInput = "time",
+  ActionSelectInput = "select",
+  ActionFilesInput = "files",
+  ActionWaitLoad = "waitload",
+  ActionGetResource = "getresource",
+  ActionExtract = "extract",
+  ActionAddHeader = "addheader",
+  ActionSetHeader = "setheader",
+  ActionDeleteHeader = "deleteheader",
+  ActionSetBody = "setbody",
+  ActionWaitEvent = "waitevent",
+  ActionKeyboard = "keyboard",
+  ActionDebug = "debug",
+  ActionSleep = "sleep",
+  ActionWaitVisible = "waitvisible",
+  limit = "limit",
+}
+
+const headlessSchema = z.object({
+  id: notEmptyString.describe("Id of this headless."),
+  steps: z
+    .array(
+      z.object({
+        args: z
+          .record(z.string())
+          .describe(
+            "Args contain arguments for the headless action. Reference in https://nuclei.projectdiscovery.io/templating-guide/protocols/headless/"
+          ),
+        name: notEmptyString.describe(
+          "Name is the name assigned to the headless action. This can be used to execute code, for instance in browser DOM using script action."
+        ),
+        action: z.nativeEnum(ActionTypeHolder).optional(),
+      })
+    )
+    .nonempty(),
+});
+
+enum NetworkInputTypeHolder {
+  hexType = "hex",
+  textType = "text",
+  limit = "limit",
+}
+
+const networkSchema = z.object({
+  id: notEmptyString.describe("Id for network request"),
+  address: z
+    .array(z.string().nonempty())
+    .describe("Host to send network requests to."),
+  addresses: z.array(z.object({ address: z.string(), tls: z.boolean() })),
+  attack: z
+    .nativeEnum(AttackType)
+    .describe(
+      "Attack is the type of payload combinations to perform. Batteringram is inserts the same payload into all defined payload positions at once, pitchfork combines multiple payload sets and clusterbomb generates permutations and combinations for all payloads."
+    ),
+  payloads: z
+    .record(z.string())
+    .describe("Payloads contains any payloads for the current request."),
+  inputs: z
+    .array(
+      z.object({
+        data: z.string().describe("The data to send as the input."),
+        type: z
+          .nativeEnum(NetworkInputTypeHolder)
+          .describe("Type is the type of input specified in `data` field"),
+        read: integer.describe(
+          "Read is the number of bytes to read from socket."
+        ),
+        name: z
+          .string()
+          .optional()
+          .describe(
+            "Name is the optional name of the data read to provide matching on."
+          ),
+      })
+    )
+    .describe("Inputs contains inputs for the network socket."),
+});
+
+const fileSchema = z.object({
+  extensions: z
+    .array(notEmptyString)
+    .describe("Extensions is the list of extensions to perform matching on."),
+  denylist: z
+    .array(notEmptyString)
+    .describe(
+      "ExtensionDenylist is the list of file extensions to deny during matching. By default, it contains some non-interesting extensions that are hardcoded in nuclei."
+    ),
+  id: z.string().optional().describe("Id of the request"),
+  "max-size": integer.describe(
+    "MaxSize is the maximum size of the file to run request on. By default, nuclei will process 5 MB files and not go more than that. It can be set to much lower or higher depending on use."
+  ),
+  "no-recursive": bool.describe(
+    "NoRecursive specifies whether to not do recursive checks if folders are provided."
+  ),
+});
+
+const sslSchema = z.object({
+  address: z.string().describe("The address for the request."),
+});
+
+const webSocketSchema = z.object({
+  address: z.string().describe("The address for the request."),
+  headers: z.record(z.string()).describe("Headers for the request."),
+  attack: z
+    .nativeEnum(AttackType)
+    .describe(
+      "Type of payload combinations to perform. Sniper is each payload once, pitchfork combines multiple payload sets and clusterbomb generates permutations and combinations for all payloads."
+    ),
+  payloads: z
+    .record(z.string())
+    .describe("Any payloads for the current request."),
+  inputs: z.array(
+    z.object({
+      data: z.string().describe("Data is the data to send as the input."),
+      name: z
+        .string()
+        .describe(
+          "Name is the optional name of the data read to provide matching on."
+        ),
+    })
+  ),
+});
+
 const templateSchema = z.object({
   id: z
     .string()
@@ -262,6 +394,26 @@ const templateSchema = z.object({
     .array(nucleiRequestSchema)
     .nonempty()
     .describe("Requests contains the http requests to make in this template."),
+  headless: z
+    .array(headlessSchema)
+    .nonempty()
+    .describe(
+      "Headless contains the headless request to make in the template."
+    ),
+  network: z
+    .array(networkSchema)
+    .describe("Network contains the network request to make in the template."),
+  file: z
+    .array(fileSchema)
+    .describe("File contains the file request to make in the template."),
+  ssl: z
+    .array(sslSchema)
+    .describe("SSL contains the SSL request to make in the template."),
+  websocket: z
+    .array(webSocketSchema)
+    .describe(
+      "Websocket contains the WebSocket request to make in the template."
+    ),
 });
 
 const jsonSchema: any = zodToJsonSchema(templateSchema, "template");
