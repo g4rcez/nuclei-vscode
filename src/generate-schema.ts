@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import { isDeepStrictEqual } from "util";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 
