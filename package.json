@@ -2,7 +2,7 @@
   "name": "nuclei-vscode",
   "displayName": "Nuclei Vscode",
   "description": "Syntax highlighting, IntelliSense, and more for Nuclei templates YAML",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "g4rcez",
   "repository": {
     "type": "git",
