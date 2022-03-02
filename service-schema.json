@@ -220,7 +220,8 @@
                 "enum": [
                   "batteringram",
                   "pitchfork",
-                  "clusterbomb"
+                  "clusterbomb",
+                  "limit"
                 ],
                 "description": "Type of payload combinations to perform. 'batteringram' is inserts the same payload into all defined payload positions at once, 'pitchfork' combines multiple payload sets and 'clusterbomb' generates permutations and combinations for all payloads."
               },
@@ -324,13 +325,320 @@
           },
           "minItems": 1,
           "description": "Requests contains the http requests to make in this template."
+        },
+        "headless": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Id of this headless."
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "args": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Args contain arguments for the headless action. Reference in https://nuclei.projectdiscovery.io/templating-guide/protocols/headless/"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Name is the name assigned to the headless action. This can be used to execute code, for instance in browser DOM using script action."
+                    },
+                    "action": {
+                      "type": "string",
+                      "enum": [
+                        "navigate",
+                        "script",
+                        "click",
+                        "rightclick",
+                        "text",
+                        "screenshot",
+                        "time",
+                        "select",
+                        "files",
+                        "waitload",
+                        "getresource",
+                        "extract",
+                        "addheader",
+                        "setheader",
+                        "deleteheader",
+                        "setbody",
+                        "waitevent",
+                        "keyboard",
+                        "debug",
+                        "sleep",
+                        "waitvisible",
+                        "limit"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "args",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "id",
+              "steps"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "description": "Headless contains the headless request to make in the template."
+        },
+        "network": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Id for network request"
+              },
+              "address": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Host to send network requests to."
+              },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "address": {
+                      "type": "string"
+                    },
+                    "tls": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "address",
+                    "tls"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "attack": {
+                "type": "string",
+                "enum": [
+                  "batteringram",
+                  "pitchfork",
+                  "clusterbomb",
+                  "limit"
+                ],
+                "description": "Attack is the type of payload combinations to perform. Batteringram is inserts the same payload into all defined payload positions at once, pitchfork combines multiple payload sets and clusterbomb generates permutations and combinations for all payloads."
+              },
+              "payloads": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Payloads contains any payloads for the current request."
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "description": "The data to send as the input."
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "hex",
+                        "text",
+                        "limit"
+                      ],
+                      "description": "Type is the type of input specified in `data` field"
+                    },
+                    "read": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "description": "Read is the number of bytes to read from socket."
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Name is the optional name of the data read to provide matching on."
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "type",
+                    "read"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Inputs contains inputs for the network socket."
+              }
+            },
+            "required": [
+              "id",
+              "address",
+              "addresses",
+              "attack",
+              "payloads",
+              "inputs"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Network contains the network request to make in the template."
+        },
+        "file": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "extensions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/dns/items/properties/name"
+                },
+                "description": "Extensions is the list of extensions to perform matching on."
+              },
+              "denylist": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/dns/items/properties/name"
+                },
+                "description": "ExtensionDenylist is the list of file extensions to deny during matching. By default, it contains some non-interesting extensions that are hardcoded in nuclei."
+              },
+              "id": {
+                "type": "string",
+                "description": "Id of the request"
+              },
+              "max-size": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "description": "MaxSize is the maximum size of the file to run request on. By default, nuclei will process 5 MB files and not go more than that. It can be set to much lower or higher depending on use."
+              },
+              "no-recursive": {
+                "$ref": "#/properties/self-container",
+                "description": "NoRecursive specifies whether to not do recursive checks if folders are provided."
+              }
+            },
+            "required": [
+              "extensions",
+              "denylist",
+              "max-size"
+            ],
+            "additionalProperties": false
+          },
+          "description": "File contains the file request to make in the template."
+        },
+        "ssl": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "The address for the request."
+              }
+            },
+            "required": [
+              "address"
+            ],
+            "additionalProperties": false
+          },
+          "description": "SSL contains the SSL request to make in the template."
+        },
+        "websocket": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "The address for the request."
+              },
+              "headers": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Headers for the request."
+              },
+              "attack": {
+                "type": "string",
+                "enum": [
+                  "batteringram",
+                  "pitchfork",
+                  "clusterbomb",
+                  "limit"
+                ],
+                "description": "Type of payload combinations to perform. Sniper is each payload once, pitchfork combines multiple payload sets and clusterbomb generates permutations and combinations for all payloads."
+              },
+              "payloads": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Any payloads for the current request."
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "description": "Data is the data to send as the input."
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Name is the optional name of the data read to provide matching on."
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "address",
+              "headers",
+              "attack",
+              "payloads",
+              "inputs"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Websocket contains the WebSocket request to make in the template."
         }
       },
       "required": [
         "id",
         "info",
         "dns",
-        "requests"
+        "requests",
+        "headless",
+        "network",
+        "file",
+        "ssl",
+        "websocket"
       ],
       "additionalProperties": false
     }
